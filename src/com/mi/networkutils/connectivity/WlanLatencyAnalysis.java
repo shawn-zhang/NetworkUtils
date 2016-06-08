@@ -62,8 +62,7 @@ public class WlanLatencyAnalysis {
                 }
                 break;
             }
-        }       
-        
+        }
         Log.i(TAG, "interface = " + mInterface + " gateway = " + mGateWay.getHostAddress());
         
         if (mLogFileName != null) {
@@ -84,7 +83,7 @@ public class WlanLatencyAnalysis {
             }
         }
         
-        Command.runRootCommand("setenfore 0");
+        Command.runRootCommand("setenforce 0");
         runPingCommand();
     }
 
@@ -112,7 +111,7 @@ public class WlanLatencyAnalysis {
             }
             mBadLatencyWriter = null;
         }
-        Command.runRootCommand("setenfore 1");
+        Command.runRootCommand("setenforce 1");
     }
 
     public String getBadLatencyInfo() {
