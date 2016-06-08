@@ -16,10 +16,10 @@
 LOCAL_PATH := $(call my-dir)
 include $(CLEAR_VARS)
 
-LOCAL_MODULE:= libexec
+LOCAL_MODULE:= libos
 
 LOCAL_SRC_FILES:= \
-	   termExec.cpp
+	   os.cpp \
 
 LOCAL_LDLIBS := -ldl -llog
 

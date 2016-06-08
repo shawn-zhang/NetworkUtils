@@ -10,31 +10,41 @@ public final class Command extends Thread {
     private static final String TAG = "COMMAND";
     
     public static final String COMMAND_PATH = "/data/data/com.mi.networkutils/";
-    public final static String DEFAULT_SHELL = "/system/bin/sh";
+    public static final String DEFAULT_SHELL = "/system/bin/sh";
     public static final String DEFAULT_ROOT = "/system/bin/su";
-    public final static String ALTERNATIVE_ROOT = "/system/xbin/su";
-    public final static String CAPTURE_PROCESS = "networkutils_capture";
+    public static final String ALTERNATIVE_ROOT = "/system/xbin/su";
+    public static final String CAPTURE_PROCESS = "networkutils_capture";
     public static final String CAPTURE_CMD = COMMAND_PATH + CAPTURE_PROCESS;
+    public static final String WPA_CLI_PROCESS = "networkutils_wpa_cli";
+    public static final String WPA_CLI_COMMAND = COMMAND_PATH + WPA_CLI_PROCESS;
+    public static final String PING_PROCESS = "networkutils_ping";
+    public static final String PING_COMMAND = COMMAND_PATH + PING_PROCESS;
 
-    public final static int TIME_OUT = -99;
+    public static final int TIME_OUT = -99;
     private static String mRootShell;
     private static String mShell;
 
     private final String mCommand;
     private final String mProcessName;
     private final StringBuilder mResult;
+    private final Object mLock = new Object();
     private final boolean mAsRoot;
     private int mExitCode;
     private int[] pid = new int[1];
     private FileDescriptor mPipe;
+
     
     public Command(String command, String processName, StringBuilder result, boolean asroot) {
-        this.mCommand = command;
+        this.mCommand = command + "\n" + "exit\n";
         this.mProcessName = processName;
         this.mResult = result;
         this.mAsRoot = asroot;
     }
 
+    public static int runRootCommand(String command) {
+        return runRootCommand(command, null);
+    }
+    
     public static int runRootCommand(String command, String processName) {
         return runCommand(command, processName, null, TIME_OUT, true);
     }
@@ -69,6 +79,15 @@ public final class Command extends Thread {
         return cmd.mExitCode;
     }
     
+    public InputStream getInputStream() {
+        synchronized(mLock) {
+            if (mPipe != null) {
+                return new FileInputStream(mPipe);
+            }
+        }
+        return null;
+    }
+    
     @Override
     public void destroy() {
         
@@ -77,11 +96,11 @@ public final class Command extends Thread {
         }
         
         if (pid[0] != -1) {
-            Exec.hangupProcessGroup(pid[0]);
+            Os.hangupProcessGroup(pid[0]);
             pid[0] = -1;
         }
         if (mPipe != null) {
-            Exec.close(mPipe);
+            Os.close(mPipe);
             mPipe = null;
         }
     }
@@ -95,7 +114,7 @@ public final class Command extends Thread {
         String arg0 = argList.get(0);
         String[] args = argList.toArray(new String[1]);
     
-        return Exec.createSubprocess(mResult != null ? 1 : 0, arg0, args, null,
+        return Os.createSubprocess(1, arg0, args, null,
             mCommand + "\nexit\n", processId);
     }
     
@@ -159,24 +178,26 @@ public final class Command extends Thread {
     @Override
     public void run() {
         try {
-            pid[0] = -1;
-            if (this.mAsRoot) {
-                if (mRootShell == null) {
-                    // switch between binaries
-                    if (new File(Command.DEFAULT_ROOT).exists()) {
-                        mRootShell = Command.DEFAULT_ROOT;
-                    } else if (new File(Command.ALTERNATIVE_ROOT).exists()) {
-                        mRootShell = Command.ALTERNATIVE_ROOT;
-                    } else {
-                        mRootShell = "su";
+            synchronized (mLock) {
+                pid[0] = -1;
+                if (this.mAsRoot) {
+                    if (mRootShell == null) {
+                        // switch between binaries
+                        if (new File(Command.DEFAULT_ROOT).exists()) {
+                            mRootShell = Command.DEFAULT_ROOT;
+                        } else if (new File(Command.ALTERNATIVE_ROOT).exists()) {
+                            mRootShell = Command.ALTERNATIVE_ROOT;
+                        } else {
+                            mRootShell = "su";
+                        }
                     }
+                    mPipe = createSubprocess(pid, mRootShell);
+                } else {
+                    mPipe = createSubprocess(pid, getShell());
                 }
-                mPipe = createSubprocess(pid, mRootShell);
-            } else {
-                mPipe = createSubprocess(pid, getShell());
             }
             if (pid[0] != -1) {
-                mExitCode = Exec.waitFor(pid[0]);
+                mExitCode = Os.waitFor(pid[0]);
             }
             if (mResult == null || mPipe == null) {
                 return;
@@ -186,17 +207,17 @@ public final class Command extends Thread {
                 final byte buf[] = new byte[8192];
                 int read = stdout.read(buf);
                 mResult.append(new String(buf, 0, read));
-            }            
+            }
         } catch (Exception ex) {
             Log.e(TAG, "Cannot execute command" + ex);
             if (mResult != null)
                 mResult.append("\n").append(ex);
         } finally {
             if (mPipe != null) {
-                Exec.close(mPipe);
+                Os.close(mPipe);
             }
             if (pid[0] != -1) {
-                Exec.hangupProcessGroup(pid[0]);
+                Os.hangupProcessGroup(pid[0]);
             }
         }
     }

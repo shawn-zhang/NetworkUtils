@@ -7,6 +7,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 import android.os.Environment;
+import android.os.SystemClock;
 
 public final class Utils {
     private final static String TAG = "MINETWORK_UTILS_UTILS";
@@ -20,7 +21,7 @@ public final class Utils {
         }
 
         StringBuilder sb = new StringBuilder();
-        String command = "ls /\n" + "exit\n";
+        String command = "ls /";
 
         int exitcode = Command.runCommand(command, sb, 10 * 1000, true);
         if (exitcode == Command.TIME_OUT) {
@@ -45,7 +46,7 @@ public final class Utils {
     }
     
     public final static String generateFileName(String prefix, String suffix) {
-        return prefix + new SimpleDateFormat("yyyy-MM-ddHHmmss").format(new Date()) + "." + suffix;
+        return prefix + new SimpleDateFormat("yyyy_MM_ddHHmmss").format(new Date()) + "." + suffix;
     }
     
     public static String getDataPath() {
@@ -61,4 +62,9 @@ public final class Utils {
         return sSdcardPath;
     }
 
+    public static final long now() {
+        return SystemClock.elapsedRealtime();
+    }
+
+    
 }

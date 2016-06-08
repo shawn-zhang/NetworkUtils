@@ -29,4 +29,18 @@
         <item>rmmdata0</item>
     </array>
 
+    <!-- Wlan Latency -->
+    <string name="wl_title">Wlan Latency</string>
+    <string name="wl_controller_summary">Start/Stop Wlan Latenty Analysis</string>
+    <string name="wl_controller_title"> Analysis Switch</string>
+    <string name="wl_latency_timeMs_title"> Latency Time</string>
+    <string name="wl_latency_timeMs_summary"> latency timeout. unit ms.</string>
+    <string name="wl_latency_timeMs_defaultvalue">50</string>
+    <string name="wl_latency_logfile_title"> Log File</string>
+    <string name="wl_latency_logfile_summary"> ping data file.</string>
+    <string name="wl_latency_logfile_defaultvalue"> networkutils_wl_logfile.txt</string>
+    <string name="wl_latency_badlatency_logfile_title"> Latency Log File</string>
+    <string name="wl_latency_badlatency_logfile_summary"> latency logfile.</string>
+    <string name="wl_latency_badlatency_logfile_defaultvalue">networkutils_latency_logfile.txt </string>    
+
 </resources>

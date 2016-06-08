@@ -42,7 +42,9 @@ public class Capture {
         } catch (InterruptedException e) {
             Log.e(TAG, "jion error " + e);
         }
-        return mCommand.getExitCode();
+        int ret = mCommand.getExitCode();
+        mCommand = null;
+        return ret;
     }
 
     public boolean start() {

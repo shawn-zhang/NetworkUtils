@@ -37,6 +37,34 @@
         </Preference>
   -->
     </PreferenceCategory>
+    
+    <PreferenceCategory android:title="@string/wl_title" >
+        
+        <SwitchPreference
+            android:key="isAnalysising"
+            android:summary="@string/wl_controller_summary"
+            android:title="@string/wl_controller_title">
+        </SwitchPreference>
+        <EditTextPreference
+            android:key="wl_latency_timeMs"
+            android:summary="@string/wl_latency_timeMs_summary"
+            android:defaultValue="@string/wl_latency_timeMs_defaultvalue"
+            android:title="@string/wl_latency_timeMs_title" >
+        </EditTextPreference>
+        <EditTextPreference
+            android:key="wl_latency_logfile"
+            android:summary="@string/wl_latency_logfile_summary"
+            android:defaultValue="@string/wl_latency_logfile_defaultvalue"
+            android:title="@string/wl_latency_logfile_title" >
+        </EditTextPreference>
+        <EditTextPreference
+            android:key="wl_latency_badlatency_logfile"
+            android:summary="@string/wl_latency_badlatency_logfile_summary"
+            android:defaultValue="@string/wl_latency_badlatency_logfile_defaultvalue"
+            android:title="@string/wl_latency_badlatency_logfile_title" >
+        </EditTextPreference>
+    </PreferenceCategory>
+
 <!-- 
     <PreferenceCategory android:title="@string/user_cat" >
         <CheckBoxPreference

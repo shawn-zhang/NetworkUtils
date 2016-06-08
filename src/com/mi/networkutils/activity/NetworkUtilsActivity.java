@@ -5,9 +5,9 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import com.actionbarsherlock.app.SherlockPreferenceActivity;
 import com.mi.networkutils.R;
 import com.mi.networkutils.capture.Capture;
+import com.mi.networkutils.connectivity.WlanLatencyAnalysis;
 import com.mi.networkutils.utils.Command;
 import com.mi.networkutils.utils.Log;
 import com.mi.networkutils.utils.Utils;
@@ -24,20 +24,30 @@ import android.os.Handler;
 import android.os.Message;
 import android.preference.EditTextPreference;
 import android.preference.Preference;
+import android.preference.PreferenceActivity;
 import android.preference.PreferenceManager;
 
-public class NetworkUtilsActivity extends SherlockPreferenceActivity implements OnSharedPreferenceChangeListener {
+public class NetworkUtilsActivity extends PreferenceActivity implements OnSharedPreferenceChangeListener {
     private final static String TAG = "NetworkUtilsActivity";
     private static final String KEY_CAPTURE_ISCAPTURING = "isCapturing";
     private static final String KEY_CAPTURE_INTERFACE = "interface";
     private static final String KEY_CAPTURE_WRITE_FILE = "write_file";
+    private static final String KEY_WL_ISANYALYSING = "isAnalysising";
+    private static final String KEY_WL_LATENCY = "wl_latency_timeMs";
+    private static final String KEY_WL_LOGFILE = "wl_latency_logfile";
+    private static final String KEY_WL_LATENCY_LOGFILE = "wl_latency_badlatency_logfile";
     private static final int MSG_NO_ROOT = 0;
 
     private Preference mIsCapturingCheck;
     private Preference mInterfaceList;
     private EditTextPreference mWriteFileEdit;
+    
+    private EditTextPreference mWLLatencyTimeEdit;
+    private EditTextPreference mWLLogFileEdit;
+    private EditTextPreference mWLLatencyLogFileEdit;
 
     private Capture mCapture;
+    private WlanLatencyAnalysis mWlanLatencyAnalysis;
     
     final Handler mHandler = new Handler() {
         @Override
@@ -71,6 +81,11 @@ public class NetworkUtilsActivity extends SherlockPreferenceActivity implements 
         mIsCapturingCheck = (Preference) findPreference(KEY_CAPTURE_ISCAPTURING);
         mInterfaceList = (Preference) findPreference(KEY_CAPTURE_INTERFACE);
         mWriteFileEdit = (EditTextPreference) findPreference(KEY_CAPTURE_WRITE_FILE);
+        
+        /*ping*/
+        mWLLatencyTimeEdit = (EditTextPreference) findPreference(KEY_WL_LATENCY);
+        mWLLogFileEdit = (EditTextPreference) findPreference(KEY_WL_LOGFILE);
+        mWLLatencyLogFileEdit = (EditTextPreference) findPreference(KEY_WL_LATENCY_LOGFILE);
     }
 
     @Override
@@ -81,7 +96,10 @@ public class NetworkUtilsActivity extends SherlockPreferenceActivity implements 
             mInterfaceList.setSummary(settings.getString(KEY_CAPTURE_INTERFACE, "").toUpperCase());
         }
 
-        mWriteFileEdit.setText(Utils.generateFileName("capture_", "pcap"));
+        mWriteFileEdit.setText(Utils.generateFileName("networkutils_capture_", "pcap"));
+        mWLLogFileEdit.setText(Utils.generateFileName("networkutils_wl_logfile_", "txt"));
+        mWLLatencyLogFileEdit.setText(Utils.generateFileName("networkutils_latency_logfile_", "txt"));
+        
         getPreferenceScreen().getSharedPreferences().registerOnSharedPreferenceChangeListener(this);
     }
 
@@ -106,6 +124,26 @@ public class NetworkUtilsActivity extends SherlockPreferenceActivity implements 
                 stopCapture();
                 mInterfaceList.setEnabled(true);
                 mWriteFileEdit.setEnabled(true);
+            }
+        } else if (key.equals(KEY_WL_ISANYALYSING)) {
+            if (settings.getBoolean(KEY_WL_ISANYALYSING, false)) {
+                mWLLatencyTimeEdit.setEnabled(false);
+                mWLLogFileEdit.setEnabled(false);
+                mWLLatencyLogFileEdit.setEnabled(false);
+                final int latency = Integer.parseInt(settings.getString(KEY_WL_LATENCY, "50"));
+                final String logFileName = settings.getString(KEY_WL_LOGFILE, "");
+                final String latencyLogFileName = settings.getString(KEY_WL_LATENCY_LOGFILE, "");
+                mWlanLatencyAnalysis = new WlanLatencyAnalysis(this,
+                        Utils.getDataPath() + "/"+ logFileName, latency, Utils.getDataPath() + "/" + latencyLogFileName);
+                mWlanLatencyAnalysis.start();
+            } else {
+                if (mWlanLatencyAnalysis != null) {
+                    mWlanLatencyAnalysis.stop();
+                }
+                mWlanLatencyAnalysis = null;
+                mWLLatencyTimeEdit.setEnabled(true);
+                mWLLogFileEdit.setEnabled(true);
+                mWLLatencyLogFileEdit.setEnabled(true);
             }
         }
     }
@@ -190,5 +228,6 @@ public class NetworkUtilsActivity extends SherlockPreferenceActivity implements 
         if (mCapture != null) {
             mCapture.stop();
         }
+        mCapture = null;
     }
 }
